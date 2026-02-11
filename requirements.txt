@@ -1,0 +1,1 @@
+This is the requirements .txt file, containing all dependencies necessary for the project
