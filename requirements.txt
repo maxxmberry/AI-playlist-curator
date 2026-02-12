@@ -40,7 +40,6 @@ gitdb==4.0.12
 GitPython==3.1.45
 googleapis-common-protos==1.72.0
 greenlet==3.3.1
-groq==0.37.1
 grpcio==1.78.0
 h11==0.16.0
 hf-xet==1.2.0
@@ -80,7 +79,6 @@ langchain-chroma==1.1.0
 langchain-classic==1.0.1
 langchain-community==0.4.1
 langchain-core==1.2.11
-langchain-groq==1.1.2
 langchain-huggingface==1.2.0
 langchain-text-splitters==1.1.0
 langgraph==1.0.8
