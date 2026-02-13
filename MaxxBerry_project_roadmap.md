@@ -1,16 +1,17 @@
 # Agentic AI Playlist Curator Project — Maxx Berry
 
-*Adapt this template to your team's project. This is a living document — update it as your architecture evolves.*
-
 ---
 
 ## 1. Project Overview
 
-**Project idea:** *(Describe your project in 2–3 sentences. What problem does your agent solve?)*
+**Project idea:** *(Describe your project in 2–3 sentences. What problem does your agent solve?)*  
+My project is to create an AI agent who can assist anyone is finding new music, as well as curate new playlists for them based on their preferences. Users can tell the agent what kind of music they like to listen to by listing preferences like favorite songs, artists, genres, etc. From there, the user can also ask the agent to curate a playlist for them based on the music they were talking about. One feature I hope to add is a connection to Spotify so users can have the agent create the playlist directly in Spotify for them.
 
-**Target domain:** *(What kind of data/knowledge does your agent need?)*
+**Target domain:** *(What kind of data/knowledge does your agent need?)*  
+The agent will require a very large corpus of ideally all music that has ever been published in the world and will store the music data and metadata. I am using MusicBrainz and Setlist FM as my sources of data.
 
-**Target users:** *(Who would use this? What would they ask it?)*
+**Target users:** *(Who would use this? What would they ask it?)*  
+The target market for my music AI agent is anyone who wants help finding music to listen to and creating playlists. From a casual music listener to some of the biggest "audiophiles", this app is made for anyone who likes music and wants to find more of what they like and have a playlist made for them to listen to. 
 
 ---
 
