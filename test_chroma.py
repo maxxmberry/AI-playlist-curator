@@ -1,11 +1,8 @@
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-# testing with fake embeddings
-from langchain_core.embeddings import FakeEmbeddings
-embeddings = FakeEmbeddings(size=1536)
-
-# embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
 test_docs = [
     Document(page_content="Python is a programming language.", metadata={"source": "test"}),
@@ -13,7 +10,10 @@ test_docs = [
     Document(page_content="Machine learning is a subset of AI.", metadata={"source": "test"}),
 ]
 
-vectorstore = Chroma.from_documents(test_docs, embeddings, collection_name="test")
+vectorstore = Chroma.from_documents(
+    documents=test_docs,
+    embedding=embeddings,
+    collection_name="test")
 retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
 
 results = retriever.invoke("What programming languages exist?")
