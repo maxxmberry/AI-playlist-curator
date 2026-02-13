@@ -32,10 +32,10 @@ Choose your provider(s) and document why. You may use one provider for everythin
 
 **Our choice:**
 
-- **Generation:** *(provider + model)*
-- **Embeddings:** *(provider + model)*
-- **Vision (if needed):** *(provider + model)*
-- **Why:** *(cost, speed, quality, multimodal needs, etc.)*
+- **Generation:** Google AI Studio, Gemini 2.0 Flash
+- **Embeddings:** Google AI Studio, models/gemini-embedding-001
+- **Vision (if needed):** N/A
+- **Why:** I chose to use Google AI Studio because it provides access to both LLMs and text embeddings, all for no charge. When weighing my options, the fact that Google provides both tools were very influential in my decision to choose it over the others because I would only need to work with one external tool. Ollama was also a potential candidate, but since it required a local GPU or Google Colab.
 
 ### LangChain Integration
 
