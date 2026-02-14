@@ -30,23 +30,20 @@ Choose your provider(s) and document why. You may use one provider for everythin
 | Ollama (local) | ✅ any open model | ✅ nomic-embed-text | ✅ LLaVA | Requires local GPU or Colab |
 | HuggingFace (local embeddings) | ❌ | ✅ sentence-transformers | ❌ | Runs on CPU in Codespaces |
 
-**Our choice:**
+**My choice:**
 
 - **Generation:** Google AI Studio, Gemini 2.0 Flash
 - **Embeddings:** Google AI Studio, models/gemini-embedding-001
-- **Vision (if needed):** N/A
 - **Why:** I chose to use Google AI Studio because it provides access to both LLMs and text embeddings, all for no charge. When weighing my options, the fact that Google provides both tools were very influential in my decision to choose it over the others because I would only need to work with one external tool. Ollama was also a potential candidate, but since it required a local GPU or Google Colab.
 
 ### LangChain Integration
 
 ```python
-# Generation — pick one:
+# Generation:
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_groq import ChatGroq
 
-# Embeddings — pick one:
+# Embedding:
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
 ```
 
 ---
@@ -58,17 +55,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 | Source | Format | Approx Size | Notes |
 |--------|--------|-------------|-------|
 | *(e.g., product docs)* | *(PDF, CSV, etc.)* | *(# docs)* | |
-| | | | |
-| | | | |
+| MusicBrainz | JSON | ~60GB+ | |
+| Setlist FM | JSON | ~9M records | |
 
 **Chunking strategy:**
-- Chunk size: *(and why)*
-- Chunk overlap: *(and why)*
-- Splitter: *(RecursiveCharacterTextSplitter, or other)*
-
-**Image data (if applicable):**
-- Description approach: *(Gemini vision, LLaVA, BLIP, CLIP)*
-- How images link back to retrievable content: *(metadata, file paths)*
+- Chunk size: 800 tokens; A common starting point is 500-800 tokens, so I decided to opt for the larger size because the music data might need extra storage size compared to other basic data.
+- Chunk overlap: 100 tokens; A recommended overlap is 10-20% of the chunk size, so I chose 100 tokens, which is right in between.  
+- Splitter: RecursiveCharacterTextSplitter
 
 ---
 
@@ -125,6 +118,7 @@ project-name/
 │   └── demo.ipynb             # Demonstrations and comparisons
 └── docs/
     └── architecture.md
+
 ```
 
 ### Production-Style Structure (For Larger Projects or Later Refactor)
@@ -176,18 +170,6 @@ Choose the track that fits your project. You can start with Track A and upgrade 
 - Text corpus, text embeddings, text retrieval
 - Works with any provider
 - Focus: chunking, retrieval quality, agent tool selection
-
-### Track B: Image RAG via Description (Intermediate)
-- Images captioned by a vision model → stored as text → retrieved as text
-- Gemini: native vision makes this straightforward
-- Groq: pair with Gemini or HuggingFace BLIP for the vision step
-- Focus: bridging modalities, preprocessing pipelines, metadata linking
-
-### Track C: CLIP-Based Multimodal Retrieval (Advanced)
-- CLIP embeds images and text into shared vector space
-- True cross-modal search: text query → image results
-- Requires `open-clip-torch`, separate from LLM provider
-- Focus: embedding spaces, cross-modal retrieval, combining non-LangChain components
 
 ---
 
