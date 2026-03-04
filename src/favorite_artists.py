@@ -49,42 +49,81 @@ def get_artist_from_cache(artist_name):
     else:
         return None
 
-while True:
-    nameInput = input("Please enter an artist name ('Q/q' to quit): ") # prompt for user input for artist name
-    if nameInput.lower() == "q":
-        # quit loop if user exits
-        break
-
-    cached = get_artist_from_cache(nameInput) # case-senstive
+# Adds a new artist to favorite artists list
+# artist_name: name of artist entered from user
+def add_artist(artist_name):
+    cached = get_artist_from_cache(artist_name)
     if cached:
-        print("Artist found in cache")
-        print(cached["documents"][0])
+        print(f"{artist_name} already in your favorites.")
+        return
+    
+    print("Fetching artist info from MusicBrainz...")
+    newArtist = get_artist_info(artist_name)
+
+    newArtistDoc = f"""
+    Artist: {newArtist.get('name')}
+    MBID: {newArtist.get('id')}
+    Country: {newArtist.get('country')}
+    Type: {newArtist.get('type')}
+    Tags: {', '.join([t['name'] for t in newArtist.get('tags', [])])}
+    """
+
+    collection.add(
+        documents=[newArtistDoc],
+        ids=[newArtist.get("id")],
+        metadatas=[{
+            "artist_name": newArtist.get("name"),
+            "type": "artist"
+        }]
+    )
+
+    print(f"{newArtist.get('name')} added to favorites!")
+
+# Removes artist from favorite artists list
+# artist_name: name of artist entered from user
+def remove_artist(artist_name):
+    results = collection.get(where={"artist_name": artist_name})
+    if not results["ids"]:
+        print(f"{artist_name} not found in favorites...")
+        return
+    
+    collection.delete(ids=results["ids"])
+    print(f"{artist_name} removed from favorites.")
+
+# Prints list of favorite artists
+def list_artists():
+    stored = collection.get()
+    if not stored["ids"]:
+        print("You don't have any favorite artists saved")
+        return
+    print("\nFavorite Artists:")
+    for meta in stored["metadatas"]:
+        print(f"- {meta["artist_name"]}")
+
+while True:
+    command = input("\nEnter a command (add/remove/list/quit/help): ").strip()
+
+    if command.lower() == "quit":
+        break
+    elif command.lower() == "help":
+        print(f"""
+add <name>: type 'add' followed by the artist name to add them to your favorites
+remove <name>: type 'remove' followed by the artist name to remove them from your favorites
+list: displays all artists in your favorites
+quit: exit the program""")
+        
+    elif command.lower().startswith("add "):
+        artistName = command[4:]
+        add_artist(artistName)
+    elif command.lower().startswith("remove "):
+        artistName = command[7:]
+        remove_artist(artistName)
+    elif command.lower() == "list":
+        list_artists()
     else:
-        print("Artist not found. Fetching from MusicBrainz")
-        newArtist = get_artist_info(nameInput) # NOT case-sensitive
+        print("Invalid command.")
 
-        newArtistDoc = f"""
-        Artist: {newArtist.get('name')}
-        MBID: {newArtist.get('id')}
-        Country: {newArtist.get('country')}
-        Type: {newArtist.get('type')}
-        Tags: {', '.join([t['name'] for t in newArtist.get('tags', [])])}
-        """
-
-        print("\nFetched from MusicBrainz:")
-        print(newArtistDoc)
-
-        # Add info to "favorite artists" collection in Chroma
-        collection.add(
-            documents=[newArtistDoc],
-            ids=[newArtist.get("id")],
-            metadatas=[{
-                "artist_name": newArtist.get("name"),
-                "type": "artist"
-            }]
-        )
-
-# Display updated favorite artists
+# Display updated favorite artists after program ends
 print("\nCurrently Stored Favorite Artists:")
 
 stored = collection.get()
