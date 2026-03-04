@@ -12,7 +12,7 @@ collection = client.get_or_create_collection(name="favorite_artists")
 def get_artist_info(artist_name):
     # Set variables for arguments in GET request
     headers = {
-        "User-Agent": "AI-Playlist-Curator/1.0 (mmb1189@usnh.edu)"
+        "User-Agent": "Music-CurAItor/1.0 (mmb1189@usnh.edu)"
     }
     url = "https://musicbrainz.org/ws/2/artist/"
     params = {
@@ -20,22 +20,29 @@ def get_artist_info(artist_name):
         "fmt": "json"
     }
 
-    # GET request to MusicBrainz
-    response = requests.get(url, headers=headers, params=params)
+    # try GET request to MusicBrainz
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=5)
 
-    if response.status_code != 200:
-        print("Error fetching data.")
-        exit()
+        # Raise HTTP errors (like 429, 503, etc.)
+        response.raise_for_status()
 
-    data = response.json()
+        data = response.json()
 
-    if not data["artists"]:
-        print("No artist found.")
-        exit()
+        if not data.get("artists"):
+            # print("No artist found.")
+            return None
 
-    artist = data["artists"][0]
+        return data["artists"][0]
 
-    return artist
+    except requests.exceptions.RequestException:
+        print("Network/API error occurred. Please try again.")
+        return None
+
+    except ValueError:
+        print("Invalid JSON response received.")
+        return None
+
 
 # Retrieves artist info from cache in chromaDB if present
 # artist_name: name of artist entered from user
@@ -59,6 +66,9 @@ def add_artist(artist_name):
     
     print("Fetching artist info from MusicBrainz...")
     newArtist = get_artist_info(artist_name)
+    if newArtist is None:
+        print("Could not retrieve artist.")
+        return
 
     newArtistDoc = f"""
     Artist: {newArtist.get('name')}
@@ -128,5 +138,7 @@ print("\nCurrently Stored Favorite Artists:")
 
 stored = collection.get()
 
+count = 0
 for i in range(len(stored["ids"])):
-    print("-", stored["metadatas"][i]["artist_name"])
+    count += 1
+    print(f"{count}. {stored["metadatas"][i]["artist_name"]}")
