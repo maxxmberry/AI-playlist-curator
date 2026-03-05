@@ -1,3 +1,6 @@
+# Simple program where you can edit and view favorite artists collection from chromaDB
+# Agent/LLM model not implemented yet
+
 import requests
 import chromadb
 
