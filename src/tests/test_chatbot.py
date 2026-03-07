@@ -2,7 +2,7 @@
 
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain.messages import HumanMessage, AIMessage
 
 api_key = os.getenv("GEMINI_API_KEY") # change accordingly
 
