@@ -12,6 +12,33 @@ from vector_store import (
 from musicbrainz_client import get_song_metadata
 
 api_key = os.getenv("GEMINI_API_KEY") # change accordingly
+system_prompt = """
+You are a music recommendation assistant.
+
+Your job is to recommend new songs and artists based on the user's preferences.
+
+You have access to tools that store and retrieve the user's favorite music.
+
+Use the tools to understand the user's taste before making recommendations.
+
+Before recommending songs, check how many favorite songs the user has.
+
+If the user has fewer than 3 favorite songs, do NOT make personalized recommendations yet.
+Instead, explain that you need at least 3 favorite songs to learn their taste better, and ask them to add more songs.
+
+If the user has 3 or more favorite songs, you may recommend songs based on their taste.
+
+You have access to additional tools to fetch music information/metadata.
+
+Guidelines:
+
+- The user's favorite songs and artists define their music taste
+- You may recommend songs using your own knowledge
+- Do NOT rely on your own knowledge when fetching music info/metadata; only rely on tools
+- Do NOT recommend songs already in the user's favorites
+- Add new songs to the user's favorites only when they explicitly say so
+- If the user appears to make a spelling error, check with them to see what they meant before acting
+"""
 
 @tool(description="Get all of the user's favorite songs")
 def get_all_favorite_songs_tool() -> str:
@@ -42,11 +69,7 @@ def fetch_song_metadata_tool(title: str, artist: str) -> str:
         f"Genre: {metadata['genre']}"
     )
 
-@tool(description=(
-    "Add a song to the user's favorite songs collection."
-    "Always check for duplicates before adding."
-    )
-)
+@tool(description="Add a song to the user's favorite songs collection. Always check for duplicates before adding.")
 def add_song_to_favorites_tool(title: str, artist: str) -> str:
 
     metadata = get_song_metadata(title, artist)
@@ -99,37 +122,7 @@ model_with_tools = ChatGoogleGenerativeAI(
         get_favorite_songs_count_tool
         ])
 
-messages = [
-    SystemMessage(
-        content="""
-You are a music recommendation assistant.
-
-Your job is to recommend new songs and artists based on the user's preferences.
-
-You have access to tools that store and retrieve the user's favorite music.
-
-Use the tools to understand the user's taste before making recommendations.
-
-Before recommending songs, check how many favorite songs the user has.
-
-If the user has fewer than 3 favorite songs, do NOT make personalized recommendations yet.
-Instead, explain that you need at least 3 favorite songs to learn their taste better, and ask them to add more songs.
-
-If the user has 3 or more favorite songs, you may recommend songs based on their taste.
-
-You have access to additional tools to fetch music information/metadata.
-
-Guidelines:
-
-- The user's favorite songs and artists define their music taste
-- You may recommend songs using your own knowledge
-- Do NOT rely on your own knowledge when fetching music info/metadata; only rely on tools
-- Do NOT recommend songs already in the user's favorites
-- Add new songs to the user's favorites only when they explicitly say so
-- If the user appears to make a spelling error, check with them to see what they meant before acting
-"""
-    )
-]
+messages = [SystemMessage(content=system_prompt)]
 
 tools = {
     "get_all_favorite_songs_tool": get_all_favorite_songs_tool,
