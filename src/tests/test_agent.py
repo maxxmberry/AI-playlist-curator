@@ -1,35 +1,16 @@
-# Simple agent with simple tool
-
 import os
 from langchain.tools import tool
-# from langchain.agents import create_agent
 from langchain.messages import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from vector_store import (
     get_all_favorite_songs,
-    get_all_favorite_artists,
-    initialize_favorite_songs,
     add_favorite_song,
-    song_already_exists
+    song_already_exists,
+    remove_favorite_song
 )
 from musicbrainz_client import get_song_metadata
 
 api_key = os.getenv("GEMINI_API_KEY") # change accordingly
-
-# Mock data
-favorite_songs = [
-        {"title": "It Ain't Like That", "artist": "Alice in Chains", "genre": "grunge"},
-        {"title": "Interstate Love Song", "artist": "Stone Temple Pilots", "genre": "grunge"},
-        {"title": "Down in a Hole", "artist": "Alice in Chains", "genre": "grunge"},
-        {"title": "Blue in Green", "artist": "Miles Davis", "genre": "jazz"},
-        {"title": "Parisienne Walkway", "artist": "Gary Moore", "genre": "rock"},
-        {"title": "Say You Love Me", "artist": "Fleetwood Mac", "genre": "rock"},
-        {"title": "Subterranean Homesick Blues", "artist": "Bob Dylan", "genre": "rock"},
-        {"title": "Don't Think Twice, It's Alright", "artist": "Bob Dylan", "genre": "folk"},
-        {"title": "Cannock Chase", "artist": "Labi Siffre", "genre": "folk"},
-    ]
-
-initialize_favorite_songs(favorite_songs)
 
 @tool(description="Get all of the user's favorite songs")
 def get_all_favorite_songs_tool() -> str:
@@ -45,7 +26,6 @@ def get_all_favorite_songs_tool() -> str:
             for s in songs
         ]
     )
-
 
 @tool(description="Fetch song metadata from MusicBrainz")
 def fetch_song_metadata_tool(title: str, artist: str) -> str:
@@ -90,6 +70,16 @@ def add_song_to_favorites_tool(title: str, artist: str) -> str:
         f'by {artist_clean} to your favorites.'
     )
 
+@tool(description="Remove a song from the user's favorite songs collection using the song title and artist name.")
+def remove_song_from_favorites_tool(title: str, artist: str) -> str:
+
+    removed = remove_favorite_song(title, artist)
+
+    if not removed:
+        return f'"{title}" by {artist} was not found in your favorite songs.'
+
+    return f'Successfully removed "{title}" by {artist} from your favorites.'
+
 # Initialize LLM with 3.1 Pro (for tools use) and bind required tools
 model_with_tools = ChatGoogleGenerativeAI(
     model="gemini-3.1-pro-preview",
@@ -98,7 +88,8 @@ model_with_tools = ChatGoogleGenerativeAI(
     ).bind_tools([
         get_all_favorite_songs_tool,
         fetch_song_metadata_tool,
-        add_song_to_favorites_tool
+        add_song_to_favorites_tool,
+        remove_song_from_favorites_tool
         ])
 
 messages = [
@@ -128,7 +119,8 @@ Guidelines:
 tools = {
     "get_all_favorite_songs_tool": get_all_favorite_songs_tool,
     "fetch_song_metadata_tool": fetch_song_metadata_tool,
-    "add_song_to_favorites_tool": add_song_to_favorites_tool
+    "add_song_to_favorites_tool": add_song_to_favorites_tool,
+    "remove_song_from_favorites_tool": remove_song_from_favorites_tool
 }
 
 # Function to safely extract text from agent message

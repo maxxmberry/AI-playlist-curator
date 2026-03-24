@@ -1,10 +1,7 @@
 import os
 import uuid
-import chromadb
 from langchain_chroma import Chroma
-# from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-import time
 
 PERSIST_DIRECTORY = "./chroma_db"
 
@@ -45,6 +42,9 @@ def song_already_exists(title, artist):
     return False
 
 def add_favorite_song(song):
+    """
+    Add a song and it's metadata to the favorite_songs collection.
+    """
 
     text = f"""
     Title: {song['title']}
@@ -59,6 +59,9 @@ def add_favorite_song(song):
     )
 
 def add_favorite_artist(artist):
+    """
+    Add a song and it's metadata to the favorite_songs collection.
+    """
 
     text = f"""
     Artist: {artist['name']}
@@ -71,7 +74,48 @@ def add_favorite_artist(artist):
         ids=[str(uuid.uuid4())]
     )
 
+def find_song_id(title, artist):
+    """
+    Find the Chroma ID of a song using title and artist to search.
+    Helper function for remove_favorite_song
+    Returns the ID if found, otherwise None.
+    """
+
+    results = favorite_songs_collection.get()
+
+    ids = results.get("ids", [])
+    metadatas = results.get("metadatas", [])
+
+    for song_id, metadata in zip(ids, metadatas):
+        if (
+            metadata.get("title", "").lower() == title.lower()
+            and metadata.get("artist", "").lower() == artist.lower()
+        ):
+            return song_id
+
+    return None
+
+
+def remove_favorite_song(title, artist):
+    """
+    Remove a song from the favorite_songs collection by ID.
+    Returns True if removed, False if not found.
+    """
+
+    song_id = find_song_id(title, artist)
+
+    if not song_id:
+        return False
+
+    favorite_songs_collection.delete(ids=[song_id])
+
+    return True
+
 def get_all_favorite_songs():
+    """
+    Get all songs from the chroma collection.
+    Returns dictionary of favorite songs collection.
+    """
 
     results = favorite_songs_collection.get()
 
@@ -79,23 +123,11 @@ def get_all_favorite_songs():
 
 
 def get_all_favorite_artists():
+    """
+    Get all artists from the chroma collection.
+    Returns dictionary of favorite artists collection.
+    """
 
     results = favorite_artists_collection.get()
 
     return results["metadatas"]
-
-def favorite_songs_collection_empty():
-    return favorite_songs_collection._collection.count() == 0
-
-def initialize_favorite_songs(initial_songs):
-
-    if favorite_songs_collection_empty():
-
-        print("Loading initial favorite songs into collection...")
-
-        for song in initial_songs:
-            add_favorite_song(song)
-            time.sleep(1)
-
-    else:
-        print("Favorite songs collection already initialized.")
