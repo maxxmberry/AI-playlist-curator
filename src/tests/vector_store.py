@@ -25,6 +25,25 @@ favorite_artists_collection = Chroma(
     persist_directory=PERSIST_DIRECTORY
 )
 
+def song_already_exists(title, artist):
+    """
+    Check if a song already exists in the favorite_songs collection.
+    """
+
+    results = favorite_songs_collection.get()
+
+    metadatas = results.get("metadatas", [])
+
+    for song in metadatas:
+
+        if (
+            song.get("title", "").lower() == title.lower()
+            and song.get("artist", "").lower() == artist.lower()
+        ):
+            return True
+
+    return False
+
 def add_favorite_song(song):
 
     text = f"""
@@ -67,7 +86,6 @@ def get_all_favorite_artists():
 
 def favorite_songs_collection_empty():
     return favorite_songs_collection._collection.count() == 0
-
 
 def initialize_favorite_songs(initial_songs):
 
