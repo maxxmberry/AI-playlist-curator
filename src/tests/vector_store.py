@@ -113,7 +113,6 @@ def remove_favorite_song(title, artist):
 
 def get_all_favorite_songs():
     """
-    Get all songs from the chroma collection.
     Returns dictionary of favorite songs collection.
     """
 
@@ -121,10 +120,20 @@ def get_all_favorite_songs():
 
     return results["metadatas"]
 
+def get_favorite_songs_count():
+    """
+    Return the number of songs in the favorite_songs collection.
+    """
+
+    results = favorite_songs_collection.get()
+
+    ids = results.get("ids", [])
+
+    return len(ids)
+
 
 def get_all_favorite_artists():
     """
-    Get all artists from the chroma collection.
     Returns dictionary of favorite artists collection.
     """
 

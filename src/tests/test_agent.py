@@ -6,7 +6,8 @@ from vector_store import (
     get_all_favorite_songs,
     add_favorite_song,
     song_already_exists,
-    remove_favorite_song
+    remove_favorite_song,
+    get_favorite_songs_count
 )
 from musicbrainz_client import get_song_metadata
 
@@ -80,6 +81,11 @@ def remove_song_from_favorites_tool(title: str, artist: str) -> str:
 
     return f'Successfully removed "{title}" by {artist} from your favorites.'
 
+@tool(description="Get the number of songs in the user's favorite songs collection.")
+def get_favorite_songs_count_tool() -> str:
+    count = get_favorite_songs_count()
+    return str(count)
+
 # Initialize LLM with 3.1 Pro (for tools use) and bind required tools
 model_with_tools = ChatGoogleGenerativeAI(
     model="gemini-3.1-pro-preview",
@@ -89,7 +95,8 @@ model_with_tools = ChatGoogleGenerativeAI(
         get_all_favorite_songs_tool,
         fetch_song_metadata_tool,
         add_song_to_favorites_tool,
-        remove_song_from_favorites_tool
+        remove_song_from_favorites_tool,
+        get_favorite_songs_count_tool
         ])
 
 messages = [
@@ -103,6 +110,13 @@ You have access to tools that store and retrieve the user's favorite music.
 
 Use the tools to understand the user's taste before making recommendations.
 
+Before recommending songs, check how many favorite songs the user has.
+
+If the user has fewer than 3 favorite songs, do NOT make personalized recommendations yet.
+Instead, explain that you need at least 3 favorite songs to learn their taste better, and ask them to add more songs.
+
+If the user has 3 or more favorite songs, you may recommend songs based on their taste.
+
 You have access to additional tools to fetch music information/metadata.
 
 Guidelines:
@@ -112,6 +126,7 @@ Guidelines:
 - Do NOT rely on your own knowledge when fetching music info/metadata; only rely on tools
 - Do NOT recommend songs already in the user's favorites
 - Add new songs to the user's favorites only when they explicitly say so
+- If the user appears to make a spelling error, check with them to see what they meant before acting
 """
     )
 ]
@@ -120,7 +135,8 @@ tools = {
     "get_all_favorite_songs_tool": get_all_favorite_songs_tool,
     "fetch_song_metadata_tool": fetch_song_metadata_tool,
     "add_song_to_favorites_tool": add_song_to_favorites_tool,
-    "remove_song_from_favorites_tool": remove_song_from_favorites_tool
+    "remove_song_from_favorites_tool": remove_song_from_favorites_tool,
+    "get_favorite_songs_count_tool": get_favorite_songs_count_tool
 }
 
 # Function to safely extract text from agent message
