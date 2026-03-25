@@ -11,9 +11,9 @@ HEADERS = {
 def get_artist_genres(artist_id):
     """
     Fetch genres for an artist.
-    Returns top 1-2 genres.
     Args:
         artist_id: MusicBrainz artist ID
+    Returns string of top 1-2 genres.
     """
 
     params = {
@@ -50,12 +50,14 @@ def get_artist_genres(artist_id):
 
     return ", ".join(top_genres)
 
+
 def search_musicbrainz_recording(title, artist=None):
     """
     Search for a recording and return raw JSON.
     Args:
         title: title of song
         artist: name of artist; default=None
+    Returns JSON data of recording
     """
 
     query = f'recording:"{title}"'
@@ -87,6 +89,7 @@ def extract_song_metadata(data):
     Extract title, artist, and genre from data.
     Args:
         data: raw JSON data
+    Returns dictionary containing song title, artist, and genre(s)
     """
 
     if not data:
@@ -123,13 +126,13 @@ def extract_song_metadata(data):
         "genre": genre
     }
 
-
 def get_song_metadata(title, artist=None):
     """
     Public function used by tools.
     Args:
         title: title of song
         artist: name of artist; default=None
+    Returns dictionary containing song title, artist, and genre(s)
     """
 
     data = search_musicbrainz_recording(title, artist)
@@ -142,6 +145,9 @@ def get_song_metadata(title, artist=None):
 def search_musicbrainz_artist(artist_name):
     """
     Search for an artist and return raw JSON.
+    Args:
+        artist_name: name of artist
+    Returns JSON data of artist
     """
 
     query = f'artist:"{artist_name}"'
@@ -165,10 +171,12 @@ def search_musicbrainz_artist(artist_name):
 
     return response.json()
 
-
 def extract_artist_metadata(data):
     """
     Extract artist metadata from the MusicBrainz response.
+    Args:
+        data: raw JSON data
+    Returns dictionary containing artist name, MBID, country, type, and genre(s)
     """
 
     if not data:
@@ -199,10 +207,13 @@ def extract_artist_metadata(data):
         "genres": genres
     }
 
-
 def get_artist_metadata(artist_name):
     """
     Public function used by tools.
+    Args:
+        artist_name: name of artist
+    Returns dictionary containing artist name, MBID, country, type, and genre(s)
+
     """
 
     data = search_musicbrainz_artist(artist_name)

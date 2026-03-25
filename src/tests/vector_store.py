@@ -41,6 +41,41 @@ def song_already_exists(title, artist):
 
     return False
 
+def artist_already_exists(name):
+    """
+    Check if an artist already exists in the favorite_artists collection.
+    """
+
+    results = favorite_artists_collection.get()
+
+    metadatas = results.get("metadatas", [])
+
+    for artist in metadatas:
+        if artist.get("name", "").lower() == name.lower():
+            return True
+
+    return False
+
+
+def get_all_favorite_songs():
+    """
+    Returns dictionary of favorite songs collection.
+    """
+
+    results = favorite_songs_collection.get()
+
+    return results["metadatas"]
+
+def get_all_favorite_artists():
+    """
+    Returns dictionary of favorite artists collection.
+    """
+
+    results = favorite_artists_collection.get()
+
+    return results["metadatas"]
+
+
 def add_favorite_song(song):
     """
     Add a song and it's metadata to the favorite_songs collection.
@@ -57,6 +92,53 @@ def add_favorite_song(song):
         metadatas=[song],
         ids=[str(uuid.uuid4())]
     )
+
+def add_favorite_artist(artist):
+
+    text = f"""
+    Artist: {artist['name']}
+    Genres: {artist['genres']}
+    Country: {artist.get('country', 'Unknown')}
+    Type: {artist.get('type', 'Unknown')}
+    """
+
+    favorite_artists_collection.add_texts(
+        texts=[text],
+        metadatas=[artist],
+        ids=[str(uuid.uuid4())]
+    )
+
+
+def remove_favorite_song(title, artist):
+    """
+    Remove a song from the favorite_songs collection by ID.
+    Returns True if removed, False if not found.
+    """
+
+    song_id = find_song_id(title, artist)
+
+    if not song_id:
+        return False
+
+    favorite_songs_collection.delete(ids=[song_id])
+
+    return True
+
+def remove_favorite_artist(name):
+    """
+    Remove an artist from the favorite_artists collection by name.
+    Returns True if removed, False if not found.
+    """
+
+    artist_id = find_artist_id_by_name(name)
+
+    if not artist_id:
+        return False
+
+    favorite_artists_collection.delete(ids=[artist_id])
+
+    return True
+
 
 def find_song_id(title, artist):
     """
@@ -79,52 +161,6 @@ def find_song_id(title, artist):
 
     return None
 
-def remove_favorite_song(title, artist):
-    """
-    Remove a song from the favorite_songs collection by ID.
-    Returns True if removed, False if not found.
-    """
-
-    song_id = find_song_id(title, artist)
-
-    if not song_id:
-        return False
-
-    favorite_songs_collection.delete(ids=[song_id])
-
-    return True
-
-
-def artist_already_exists(name):
-    """
-    Check if an artist already exists in the favorite_artists collection.
-    """
-
-    results = favorite_artists_collection.get()
-
-    metadatas = results.get("metadatas", [])
-
-    for artist in metadatas:
-        if artist.get("name", "").lower() == name.lower():
-            return True
-
-    return False
-
-def add_favorite_artist(artist):
-
-    text = f"""
-    Artist: {artist['name']}
-    Genres: {artist['genres']}
-    Country: {artist.get('country', 'Unknown')}
-    Type: {artist.get('type', 'Unknown')}
-    """
-
-    favorite_artists_collection.add_texts(
-        texts=[text],
-        metadatas=[artist],
-        ids=[str(uuid.uuid4())]
-    )
-
 def find_artist_id_by_name(name):
     """
     Find the Chroma ID for a favorite artist by exact name match.
@@ -143,30 +179,6 @@ def find_artist_id_by_name(name):
 
     return None
 
-def remove_favorite_artist(name):
-    """
-    Remove an artist from the favorite_artists collection by name.
-    Returns True if removed, False if not found.
-    """
-
-    artist_id = find_artist_id_by_name(name)
-
-    if not artist_id:
-        return False
-
-    favorite_artists_collection.delete(ids=[artist_id])
-
-    return True
-
-
-def get_all_favorite_songs():
-    """
-    Returns dictionary of favorite songs collection.
-    """
-
-    results = favorite_songs_collection.get()
-
-    return results["metadatas"]
 
 def get_favorite_songs_count():
     """
@@ -178,15 +190,6 @@ def get_favorite_songs_count():
     ids = results.get("ids", [])
 
     return len(ids)
-
-def get_all_favorite_artists():
-    """
-    Returns dictionary of favorite artists collection.
-    """
-
-    results = favorite_artists_collection.get()
-
-    return results["metadatas"]
 
 def get_favorite_artists_count():
     """
