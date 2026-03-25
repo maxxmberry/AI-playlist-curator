@@ -2,7 +2,7 @@ import os
 from langchain.tools import tool
 from langchain.messages import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from vector_store import (
+from modules.vector_store import (
     get_all_favorite_songs,
     add_favorite_song,
     song_already_exists,
@@ -15,7 +15,7 @@ from vector_store import (
     get_favorite_artists_count,
     search_playlist_context
 )
-from musicbrainz_client import get_song_metadata, get_artist_metadata
+from modules.musicbrainz_client import get_song_metadata, get_artist_metadata
 
 api_key = os.getenv("GEMINI_API_KEY") # change accordingly
 system_prompt = """
