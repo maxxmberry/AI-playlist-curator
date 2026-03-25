@@ -202,6 +202,7 @@ def get_favorite_artists_count():
 
     return len(ids)
 
+
 def search_playlist_context(query, song_k=4, artist_k=3):
     """
     Use semantic similarity search on favorite songs and favorite artists
