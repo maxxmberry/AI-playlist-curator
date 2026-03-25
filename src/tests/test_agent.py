@@ -7,9 +7,11 @@ from vector_store import (
     add_favorite_song,
     song_already_exists,
     remove_favorite_song,
-    get_favorite_songs_count
+    get_favorite_songs_count,
+    add_favorite_artist,
+    artist_already_exists
 )
-from musicbrainz_client import get_song_metadata
+from musicbrainz_client import get_song_metadata, get_artist_metadata
 
 api_key = os.getenv("GEMINI_API_KEY") # change accordingly
 system_prompt = """
@@ -109,6 +111,28 @@ def get_favorite_songs_count_tool() -> str:
     count = get_favorite_songs_count()
     return str(count)
 
+@tool(description="Add an artist to the user's favorite artists collection. Fetch artist metadata from MusicBrainz and check for duplicates before adding.")
+def add_artist_to_favorites_tool(artist_name: str) -> str:
+
+    metadata = get_artist_metadata(artist_name)
+
+    if not metadata:
+        return "Could not find metadata for that artist."
+
+    artist_name_clean = metadata["name"]
+
+    if artist_already_exists(artist_name_clean):
+        return f'{artist_name_clean} is already in your favorite artists.'
+
+    add_favorite_artist(metadata)
+
+    return (
+        f'Successfully added {artist_name_clean} to your favorite artists.\n'
+        f'Genres: {metadata["genres"]}\n'
+        f'Country: {metadata["country"]}\n'
+        f'Type: {metadata["type"]}'
+    )
+
 # Initialize LLM with 3.1 Pro (for tools use) and bind required tools
 model_with_tools = ChatGoogleGenerativeAI(
     model="gemini-3.1-pro-preview",
@@ -119,7 +143,8 @@ model_with_tools = ChatGoogleGenerativeAI(
         fetch_song_metadata_tool,
         add_song_to_favorites_tool,
         remove_song_from_favorites_tool,
-        get_favorite_songs_count_tool
+        get_favorite_songs_count_tool,
+        add_artist_to_favorites_tool
         ])
 
 messages = [SystemMessage(content=system_prompt)]
@@ -129,7 +154,8 @@ tools = {
     "fetch_song_metadata_tool": fetch_song_metadata_tool,
     "add_song_to_favorites_tool": add_song_to_favorites_tool,
     "remove_song_from_favorites_tool": remove_song_from_favorites_tool,
-    "get_favorite_songs_count_tool": get_favorite_songs_count_tool
+    "get_favorite_songs_count_tool": get_favorite_songs_count_tool,
+    "add_artist_to_favorites_tool": add_artist_to_favorites_tool
 }
 
 # Function to safely extract text from agent message

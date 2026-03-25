@@ -8,40 +8,6 @@ HEADERS = {
     "User-Agent": "Music-CurAItor/2.0 (mmb1189@usnh.edu)"
 }
 
-
-def search_musicbrainz_recording(title, artist=None):
-    """
-    Search for a recording and return raw JSON.
-    Args:
-        title: title of song
-        artist: name of artist; default=None
-    """
-
-    query = f'recording:"{title}"'
-
-    if artist:
-        query += f' AND artist:"{artist}"'
-
-    params = {
-        "query": query,
-        "fmt": "json",
-        "limit": 1
-    }
-
-    response = requests.get(
-        BASE_RECORDING_URL,
-        headers=HEADERS,
-        params=params,
-        timeout=10
-    )
-
-    if response.status_code != 200:
-        print("Recording request failed.")
-        return None
-
-    return response.json()
-
-
 def get_artist_genres(artist_id):
     """
     Fetch genres for an artist.
@@ -84,6 +50,37 @@ def get_artist_genres(artist_id):
 
     return ", ".join(top_genres)
 
+def search_musicbrainz_recording(title, artist=None):
+    """
+    Search for a recording and return raw JSON.
+    Args:
+        title: title of song
+        artist: name of artist; default=None
+    """
+
+    query = f'recording:"{title}"'
+
+    if artist:
+        query += f' AND artist:"{artist}"'
+
+    params = {
+        "query": query,
+        "fmt": "json",
+        "limit": 1
+    }
+
+    response = requests.get(
+        BASE_RECORDING_URL,
+        headers=HEADERS,
+        params=params,
+        timeout=10
+    )
+
+    if response.status_code != 200:
+        print("Recording request failed.")
+        return None
+
+    return response.json()
 
 def extract_song_metadata(data):
     """
@@ -138,5 +135,78 @@ def get_song_metadata(title, artist=None):
     data = search_musicbrainz_recording(title, artist)
 
     metadata = extract_song_metadata(data)
+
+    return metadata
+
+
+def search_musicbrainz_artist(artist_name):
+    """
+    Search for an artist and return raw JSON.
+    """
+
+    query = f'artist:"{artist_name}"'
+
+    params = {
+        "query": query,
+        "fmt": "json",
+        "limit": 1
+    }
+
+    response = requests.get(
+        BASE_ARTIST_URL,
+        headers=HEADERS,
+        params=params,
+        timeout=10
+    )
+
+    if response.status_code != 200:
+        print("Artist search request failed.")
+        return None
+
+    return response.json()
+
+
+def extract_artist_metadata(data):
+    """
+    Extract artist metadata from the MusicBrainz response.
+    """
+
+    if not data:
+        return None
+
+    artists = data.get("artists", [])
+
+    if not artists:
+        return None
+
+    artist = artists[0]
+
+    artist_name = artist.get("name")
+    artist_id = artist.get("id")
+    country = artist.get("country", "Unknown")
+    artist_type = artist.get("type", "Unknown")
+
+    genres = "Unknown"
+
+    if artist_id:
+        genres = get_artist_genres(artist_id)
+
+    return {
+        "name": artist_name,
+        "mbid": artist_id,
+        "country": country,
+        "type": artist_type,
+        "genres": genres
+    }
+
+
+def get_artist_metadata(artist_name):
+    """
+    Public function used by tools.
+    """
+
+    data = search_musicbrainz_artist(artist_name)
+
+    metadata = extract_artist_metadata(data)
 
     return metadata

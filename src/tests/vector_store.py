@@ -58,22 +58,6 @@ def add_favorite_song(song):
         ids=[str(uuid.uuid4())]
     )
 
-def add_favorite_artist(artist):
-    """
-    Add a song and it's metadata to the favorite_songs collection.
-    """
-
-    text = f"""
-    Artist: {artist['name']}
-    Genres: {artist['genres']}
-    """
-
-    favorite_artists_collection.add_texts(
-        texts=[text],
-        metadatas=[artist],
-        ids=[str(uuid.uuid4())]
-    )
-
 def find_song_id(title, artist):
     """
     Find the Chroma ID of a song using title and artist to search.
@@ -95,7 +79,6 @@ def find_song_id(title, artist):
 
     return None
 
-
 def remove_favorite_song(title, artist):
     """
     Remove a song from the favorite_songs collection by ID.
@@ -110,6 +93,38 @@ def remove_favorite_song(title, artist):
     favorite_songs_collection.delete(ids=[song_id])
 
     return True
+
+
+def artist_already_exists(name):
+    """
+    Check if an artist already exists in the favorite_artists collection.
+    """
+
+    results = favorite_artists_collection.get()
+
+    metadatas = results.get("metadatas", [])
+
+    for artist in metadatas:
+        if artist.get("name", "").lower() == name.lower():
+            return True
+
+    return False
+
+def add_favorite_artist(artist):
+
+    text = f"""
+    Artist: {artist['name']}
+    Genres: {artist['genres']}
+    Country: {artist.get('country', 'Unknown')}
+    Type: {artist.get('type', 'Unknown')}
+    """
+
+    favorite_artists_collection.add_texts(
+        texts=[text],
+        metadatas=[artist],
+        ids=[str(uuid.uuid4())]
+    )
+
 
 def get_all_favorite_songs():
     """
@@ -130,7 +145,6 @@ def get_favorite_songs_count():
     ids = results.get("ids", [])
 
     return len(ids)
-
 
 def get_all_favorite_artists():
     """
