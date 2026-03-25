@@ -12,7 +12,8 @@ from vector_store import (
     artist_already_exists,
     get_all_favorite_artists,
     remove_favorite_artist,
-    get_favorite_artists_count
+    get_favorite_artists_count,
+    search_playlist_context
 )
 from musicbrainz_client import get_song_metadata, get_artist_metadata
 
@@ -29,6 +30,7 @@ Use tools whenever the user asks to:
 - add a song or artist to favorites
 - remove a song or artist from favorites
 - fetch music metadata or artist metadata
+- create a playlist
 
 Before making personalized song recommendations, first check how many favorite songs the user has.
 
@@ -44,6 +46,9 @@ When the user asks to add a song to favorite songs, use the add_song_to_favorite
 Do not use list tools for add requests.
 
 When the user asks to show or list favorite songs or artists, use the appropriate list tool.
+
+When the user asks for a playlist based on a vibe, genre, era, or theme, use the playlist_context_tool first to retrieve relevant favorite songs and artists before creating the playlist.
+Playlists you create can include some previously favorited songs but should consist of predominatly new songs for the user.
 
 Do NOT rely on your own knowledge when fetching music metadata. Use tools for metadata requests.
 
@@ -240,6 +245,42 @@ def remove_artist_from_favorites_tool(artist_name: str) -> str:
 
     return f'Successfully removed {artist_name} from your favorite artists.'
 
+@tool(
+    description=(
+        "Build playlist context for a requested vibe, genre, era, or theme by "
+        "semantically searching the user's saved favorite songs and artists. "
+        "Use this before creating a playlist or themed music recommendation."
+    )
+)
+def playlist_context_tool(query: str) -> str:
+
+    context = search_playlist_context(query)
+
+    songs = context.get("songs", [])
+    artists = context.get("artists", [])
+
+    if not songs and not artists:
+        return "No relevant favorite songs or artists were found for that playlist theme."
+
+    lines = [f'Playlist theme: {query}', ""]
+
+    if songs:
+        lines.append("Closest favorite songs:")
+        for i, song in enumerate(songs, start=1):
+            lines.append(
+                f'{i}. "{song["title"]}" by {song["artist"]} ({song["genre"]})'
+            )
+        lines.append("")
+
+    if artists:
+        lines.append("Closest favorite artists:")
+        for i, artist in enumerate(artists, start=1):
+            lines.append(
+                f'{i}. {artist["name"]} | Genres: {artist["genres"]} | Country: {artist["country"]} | Type: {artist["type"]}'
+            )
+
+    return "\n".join(lines)
+
 # Initialize LLM with 3.1 Pro (for tools use) and bind required tools
 model_with_tools = ChatGoogleGenerativeAI(
     model="gemini-3.1-pro-preview",
@@ -255,7 +296,8 @@ model_with_tools = ChatGoogleGenerativeAI(
         add_song_to_favorites_tool,
         add_artist_to_favorites_tool,
         remove_song_from_favorites_tool,
-        remove_artist_from_favorites_tool
+        remove_artist_from_favorites_tool,
+        playlist_context_tool
         ])
 
 messages = [SystemMessage(content=system_prompt)]
@@ -270,7 +312,8 @@ tools = {
     "add_song_to_favorites_tool": add_song_to_favorites_tool,
     "add_artist_to_favorites_tool": add_artist_to_favorites_tool,
     "remove_song_from_favorites_tool": remove_song_from_favorites_tool,
-    "remove_artist_from_favorites_tool": remove_artist_from_favorites_tool
+    "remove_artist_from_favorites_tool": remove_artist_from_favorites_tool,
+    "playlist_context_tool": playlist_context_tool
 }
 
 # Function to safely extract text from agent message

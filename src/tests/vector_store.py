@@ -201,3 +201,67 @@ def get_favorite_artists_count():
     ids = results.get("ids", [])
 
     return len(ids)
+
+def search_playlist_context(query, song_k=4, artist_k=3):
+    """
+    Use semantic similarity search on favorite songs and favorite artists
+    to find the strongest matches for a playlist theme/vibe query.
+
+    Returns a dictionary with:
+    {
+        "songs": [...],
+        "artists": [...]
+    }
+    """
+
+    song_docs = favorite_songs_collection.similarity_search(query, k=song_k)
+    artist_docs = favorite_artists_collection.similarity_search(query, k=artist_k)
+
+    song_matches = []
+    artist_matches = []
+
+    seen_songs = set()
+    seen_artists = set()
+
+    for doc in song_docs:
+        metadata = doc.metadata or {}
+
+        title = metadata.get("title", "Unknown")
+        artist = metadata.get("artist", "Unknown")
+        genre = metadata.get("genre", "Unknown")
+
+        key = (title.lower(), artist.lower())
+        if key in seen_songs:
+            continue
+        seen_songs.add(key)
+
+        song_matches.append({
+            "title": title,
+            "artist": artist,
+            "genre": genre
+        })
+
+    for doc in artist_docs:
+        metadata = doc.metadata or {}
+
+        name = metadata.get("name", "Unknown")
+        genres = metadata.get("genres", "Unknown")
+        country = metadata.get("country", "Unknown")
+        artist_type = metadata.get("type", "Unknown")
+
+        key = name.lower()
+        if key in seen_artists:
+            continue
+        seen_artists.add(key)
+
+        artist_matches.append({
+            "name": name,
+            "genres": genres,
+            "country": country,
+            "type": artist_type
+        })
+
+    return {
+        "songs": song_matches,
+        "artists": artist_matches
+    }
