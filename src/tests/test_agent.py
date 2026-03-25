@@ -9,7 +9,10 @@ from vector_store import (
     remove_favorite_song,
     get_favorite_songs_count,
     add_favorite_artist,
-    artist_already_exists
+    artist_already_exists,
+    get_all_favorite_artists,
+    remove_favorite_artist,
+    get_favorite_artists_count
 )
 from musicbrainz_client import get_song_metadata, get_artist_metadata
 
@@ -23,7 +26,7 @@ You have access to tools that store and retrieve the user's favorite music.
 
 Use the tools to understand the user's taste before making recommendations.
 
-Before recommending songs, check how many favorite songs the user has.
+Before recommending anything, check how many favorite songs the user has.
 
 If the user has fewer than 3 favorite songs, do NOT make personalized recommendations yet.
 Instead, explain that you need at least 3 favorite songs to learn their taste better, and ask them to add more songs.
@@ -31,6 +34,8 @@ Instead, explain that you need at least 3 favorite songs to learn their taste be
 If the user has 3 or more favorite songs, you may recommend songs based on their taste.
 
 You have access to additional tools to fetch music information/metadata.
+
+When you print out lists, please number them instead of using bullet points (asterisks)
 
 Guidelines:
 
@@ -133,6 +138,36 @@ def add_artist_to_favorites_tool(artist_name: str) -> str:
         f'Type: {metadata["type"]}'
     )
 
+@tool(description="Get all of the user's favorite artists")
+def get_all_favorite_artists_tool() -> str:
+
+    artists = get_all_favorite_artists()
+
+    if not artists:
+        return "No favorite artists found."
+
+    return "\n".join(
+        [
+            f"{a['name']} | Genres: {a.get('genres', 'Unknown')} | Country: {a.get('country', 'Unknown')} | Type: {a.get('type', 'Unknown')}"
+            for a in artists
+        ]
+    )
+
+@tool(description="Remove an artist from the user's favorite artists collection by artist name.")
+def remove_artist_from_favorites_tool(artist_name: str) -> str:
+
+    removed = remove_favorite_artist(artist_name)
+
+    if not removed:
+        return f'{artist_name} was not found in your favorite artists.'
+
+    return f'Successfully removed {artist_name} from your favorite artists.'
+
+@tool(description="Get the number of artists in the user's favorite artists collection.")
+def get_favorite_artists_count_tool() -> str:
+    count = get_favorite_artists_count()
+    return str(count)
+
 # Initialize LLM with 3.1 Pro (for tools use) and bind required tools
 model_with_tools = ChatGoogleGenerativeAI(
     model="gemini-3.1-pro-preview",
@@ -144,7 +179,10 @@ model_with_tools = ChatGoogleGenerativeAI(
         add_song_to_favorites_tool,
         remove_song_from_favorites_tool,
         get_favorite_songs_count_tool,
-        add_artist_to_favorites_tool
+        add_artist_to_favorites_tool,
+        get_all_favorite_artists_tool,
+        remove_artist_from_favorites_tool,
+        get_favorite_artists_count_tool
         ])
 
 messages = [SystemMessage(content=system_prompt)]
@@ -155,7 +193,10 @@ tools = {
     "add_song_to_favorites_tool": add_song_to_favorites_tool,
     "remove_song_from_favorites_tool": remove_song_from_favorites_tool,
     "get_favorite_songs_count_tool": get_favorite_songs_count_tool,
-    "add_artist_to_favorites_tool": add_artist_to_favorites_tool
+    "add_artist_to_favorites_tool": add_artist_to_favorites_tool,
+    "get_all_favorite_artists_tool": get_all_favorite_artists_tool,
+    "remove_artist_from_favorites_tool": remove_artist_from_favorites_tool,
+    "get_favorite_artists_count_tool": get_favorite_artists_count_tool
 }
 
 # Function to safely extract text from agent message

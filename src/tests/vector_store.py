@@ -125,6 +125,39 @@ def add_favorite_artist(artist):
         ids=[str(uuid.uuid4())]
     )
 
+def find_artist_id_by_name(name):
+    """
+    Find the Chroma ID for a favorite artist by exact name match.
+    Helper function for remove_favorite_artist.
+    Returns the ID if found, otherwise None.
+    """
+
+    results = favorite_artists_collection.get()
+
+    ids = results.get("ids", [])
+    metadatas = results.get("metadatas", [])
+
+    for artist_id, metadata in zip(ids, metadatas):
+        if metadata.get("name", "").lower() == name.lower():
+            return artist_id
+
+    return None
+
+def remove_favorite_artist(name):
+    """
+    Remove an artist from the favorite_artists collection by name.
+    Returns True if removed, False if not found.
+    """
+
+    artist_id = find_artist_id_by_name(name)
+
+    if not artist_id:
+        return False
+
+    favorite_artists_collection.delete(ids=[artist_id])
+
+    return True
+
 
 def get_all_favorite_songs():
     """
@@ -154,3 +187,14 @@ def get_all_favorite_artists():
     results = favorite_artists_collection.get()
 
     return results["metadatas"]
+
+def get_favorite_artists_count():
+    """
+    Return the number of artists in the favorite_artists collection.
+    """
+
+    results = favorite_artists_collection.get()
+
+    ids = results.get("ids", [])
+
+    return len(ids)
