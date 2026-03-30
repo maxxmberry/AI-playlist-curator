@@ -32,12 +32,12 @@ Use tools whenever the user asks to:
 - fetch music metadata or artist metadata
 - create a playlist
 
-Before making personalized song recommendations, first check how many favorite songs the user has.
+Before making personalized song recommendations or playlists, first check how many favorite songs the user has.
 
-If the user has fewer than 3 favorite songs, do NOT make personalized recommendations yet.
-Instead, explain that you need at least 3 favorite songs to learn their taste better, and ask them to add more songs.
+If the user has 3 or more favorite songs, you may recommend songs and create playlists based on their taste.
 
-If the user has 3 or more favorite songs, you may recommend songs based on their taste.
+If the user has fewer than 3 favorite songs and asks for a recommendation or playlist, do not refuse the request.
+Instead, continue the request and inform the user that you will do your best to recommend songs and create playlists based on the limited information you have.
 
 When the user asks to add an artist to favorite artists, use the add_artist_to_favorites_tool directly.
 Do not use the favorite artists list tool for add requests.
@@ -352,7 +352,7 @@ while True:
 
             selected_tool = tools[tool_name]
 
-            tool_result = selected_tool.invoke(tool_call)
+            tool_result = selected_tool.invoke(tool_call["args"])
 
             messages.append(tool_result)
 
