@@ -1,6 +1,9 @@
 import os
+from typing import List, Optional, Tuple
+
 from langchain.tools import tool
-from langchain.messages import HumanMessage, SystemMessage
+from langchain.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from modules.vector_store import (
     get_all_favorite_songs,
@@ -300,8 +303,6 @@ model_with_tools = ChatGoogleGenerativeAI(
         playlist_context_tool
         ])
 
-messages = [SystemMessage(content=system_prompt)]
-
 tools = {
     "get_all_favorite_songs_tool": get_all_favorite_songs_tool,
     "get_all_favorite_artists_tool": get_all_favorite_artists_tool,
@@ -316,6 +317,9 @@ tools = {
     "playlist_context_tool": playlist_context_tool
 }
 
+def create_initial_messages() -> List[BaseMessage]:
+    return [SystemMessage(content=system_prompt)]
+
 # Function to safely extract text from agent message
 def extract_text(response):
 
@@ -329,41 +333,65 @@ def extract_text(response):
         return str(response.content)
     return str(response)
 
-while True:
+def run_agent(
+    user_input: str,
+    messages: Optional[List[BaseMessage]] = None
+) -> Tuple[str, List[BaseMessage]]:
+    """
+    Run one response cycle of the agent with the given user input and message history.
+    """
 
-    user_input = input("\nYou: ")
+    # reloads system prompt in the event messages is cleared
+    if messages is None:
+        messages = create_initial_messages()
 
-    if user_input.lower() in ["quit", "exit"]:
-        break
-
-    messages.append(HumanMessage(user_input))
+    messages.append(HumanMessage(content=user_input))
 
     ai_msg = model_with_tools.invoke(messages)
     messages.append(ai_msg)
 
-    print(ai_msg.tool_calls)
-
-    # Only run tools if they exist
     if ai_msg.tool_calls:
-
         for tool_call in ai_msg.tool_calls:
-
             tool_name = tool_call["name"]
+            tool_args = tool_call["args"]
+            tool_id = tool_call["id"]
 
-            selected_tool = tools[tool_name]
+            selected_tool = tools.get(tool_name)
 
-            tool_result = selected_tool.invoke(tool_call["args"])
+            if selected_tool is None:
+                tool_result = f"Tool '{tool_name}' was not found."
+            else:
+                try:
+                    tool_result = selected_tool.invoke(tool_args)
+                except Exception as e:
+                    tool_result = f"Tool '{tool_name}' failed with error: {str(e)}"
 
-            messages.append(tool_result)
+            messages.append(
+                ToolMessage(
+                    content=str(tool_result),
+                    tool_call_id=tool_id
+                )
+            )
 
-        # Get final response AFTER tool execution
         final_response = model_with_tools.invoke(messages)
-
     else:
-
-        # Use the original response directly
         final_response = ai_msg
 
     messages.append(final_response)
 
-    print("\nAgent:", extract_text(final_response))
+    return extract_text(final_response), messages
+
+if __name__ == "__main__":
+    messages = create_initial_messages()
+
+    while True:
+        user_input = input("\nYou: ").strip()
+
+        if user_input.lower() in ["quit", "exit"]:
+            break
+
+        if not user_input:
+            continue
+
+        response_text, messages = run_agent(user_input, messages)
+        print("\nAgent:", response_text)
